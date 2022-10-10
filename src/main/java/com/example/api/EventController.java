@@ -1,0 +1,80 @@
+package com.example.api;
+
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
+@RestController
+public class EventController {
+    private final EventRepository repository;
+
+    public EventController(EventRepository repository) {
+        this.repository = repository;
+    }
+
+    //    @GetMapping("/events")
+//    List<Event> all() {
+//        return repository.findAll();
+//    }
+    // end::get-aggregate-root[]
+    @GetMapping("/events")
+    CollectionModel<EntityModel<Event>> all() {
+        List<EntityModel<Event>> events = repository.findAll().stream()
+                .map(event -> EntityModel.of(event,
+                        linkTo(methodOn(EventController.class).one(event.getId())).withSelfRel(),
+                        linkTo(methodOn(EventController.class).all()).withRel("events"))).toList();
+        return CollectionModel.of(events,
+                linkTo(methodOn(EventController.class).all()).withSelfRel());
+    }
+
+
+    @PostMapping("/events")
+    Event newEvent(@RequestBody Event newEvent) {
+        return repository.save(newEvent);
+    }
+
+    // Single item
+//    @GetMapping("/events/{id}")
+//    Event one(@PathVariable Long id) {
+//        return repository.findById(id)
+//                .orElseThrow(() -> new EventNotFoundException(id));
+//    }
+
+    @GetMapping("/events/{id}")
+    EntityModel<Event> one(@PathVariable Long id) {
+        Event event = repository.findById(id)
+                .orElseThrow(() -> new EventNotFoundException(id));
+
+        return EntityModel.of(event,
+                linkTo(methodOn(EventController.class).one(id)).withSelfRel(),
+                linkTo(methodOn(EventController.class).all()).withRel("events"));
+    }
+
+    @PutMapping("/events/{id}")
+    Event replaceEvent(@RequestBody Event newEvent, @PathVariable Long id) {
+
+        return repository.findById(id)
+                .map(event -> {
+                    event.setName(newEvent.getName());
+                    event.setTime(newEvent.getTime());
+                    event.setLocation(newEvent.getLocation());
+                    return repository.save(event);
+                })
+                .orElseGet(() -> {
+                    newEvent.setId(id);
+                    return repository.save(newEvent);
+                });
+    }
+
+    @DeleteMapping("/events/{id}")
+    void deleteEmployee(@PathVariable Long id) {
+        repository.deleteById(id);
+
+    }
+}
