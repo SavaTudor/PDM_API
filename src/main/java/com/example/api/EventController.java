@@ -2,6 +2,8 @@ package com.example.api;
 
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,20 +20,23 @@ public class EventController {
         this.repository = repository;
     }
 
-    //    @GetMapping("/events")
-//    List<Event> all() {
-//        return repository.findAll();
-//    }
-    // end::get-aggregate-root[]
-    @GetMapping("/events")
-    CollectionModel<EntityModel<Event>> all() {
-        List<EntityModel<Event>> events = repository.findAll().stream()
-                .map(event -> EntityModel.of(event,
-                        linkTo(methodOn(EventController.class).one(event.getId())).withSelfRel(),
-                        linkTo(methodOn(EventController.class).all()).withRel("events"))).toList();
-        return CollectionModel.of(events,
-                linkTo(methodOn(EventController.class).all()).withSelfRel());
+    @CrossOrigin(origins = "http://localhost:8100")
+        @GetMapping("/events")
+    List<Event> all() {
+        return repository.findAll();
     }
+    // end::get-aggregate-root[]
+
+//    @CrossOrigin(origins = "http://localhost:8100")
+//    @GetMapping("/events")
+//    CollectionModel<EntityModel<Event>> all() {
+//        List<EntityModel<Event>> events = repository.findAll().stream()
+//                .map(event -> EntityModel.of(event,
+//                        linkTo(methodOn(EventController.class).one(event.getId())).withSelfRel(),
+//                        linkTo(methodOn(EventController.class).all()).withRel("events"))).toList();
+//        return CollectionModel.of(events,
+//                linkTo(methodOn(EventController.class).all()).withSelfRel());
+//    }
 
 
     @PostMapping("/events")
@@ -76,5 +81,11 @@ public class EventController {
     void deleteEmployee(@PathVariable Long id) {
         repository.deleteById(id);
 
+    }
+
+    @MessageMapping("/chat")
+    @SendTo("/topic/messages")
+    public SocketMessage send(Event message) throws Exception {
+        return new SocketMessage(message);
     }
 }
