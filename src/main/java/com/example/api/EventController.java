@@ -20,6 +20,16 @@ public class EventController {
         this.repository = repository;
     }
 
+    public Long nextId(){
+        Long maxId = 1L;
+        for(Event event: repository.findAll()){
+            if(event.getId()>maxId) {
+                maxId = event.getId();
+            }
+        }
+        return maxId+1;
+    }
+
     @CrossOrigin(origins = "http://localhost:8100")
         @GetMapping("/events")
     List<Event> all() {
@@ -38,10 +48,21 @@ public class EventController {
 //                linkTo(methodOn(EventController.class).all()).withSelfRel());
 //    }
 
-
+    @CrossOrigin(origins = "http://localhost:8100")
     @PostMapping("/events")
     Event newEvent(@RequestBody Event newEvent) {
-        return repository.save(newEvent);
+        System.out.println(newEvent);
+        return repository.findById(newEvent.getId())
+                .map(event -> {
+                    event.setName(newEvent.getName());
+                    event.setTime(newEvent.getTime());
+                    event.setLocation(newEvent.getLocation());
+                    return repository.save(event);
+                })
+                .orElseGet(() -> {
+                    newEvent.setId(nextId());
+                    return repository.save(newEvent);
+                });
     }
 
     // Single item
