@@ -1,5 +1,11 @@
 package com.example.api;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -10,6 +16,8 @@ import java.util.Objects;
 public class Event {
     private @Id @GeneratedValue Long id;
     private String name;
+
+    private LocalDateTime localDateTime;
     private LocalDateTime time;
     private String location;
 
