@@ -6,6 +6,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,18 +21,18 @@ public class EventController {
         this.repository = repository;
     }
 
-    public Long nextId(){
+    public Long nextId() {
         Long maxId = 1L;
-        for(Event event: repository.findAll()){
-            if(event.getId()>maxId) {
+        for (Event event : repository.findAll()) {
+            if (event.getId() > maxId) {
                 maxId = event.getId();
             }
         }
-        return maxId+1;
+        return maxId + 1;
     }
 
     @CrossOrigin(origins = "http://localhost:8100")
-        @GetMapping("/events")
+    @GetMapping("/events")
     List<Event> all() {
         return repository.findAll();
     }
@@ -52,17 +53,22 @@ public class EventController {
     @PostMapping("/events")
     Event newEvent(@RequestBody Event newEvent) {
         System.out.println(newEvent);
-        return repository.findById(newEvent.getId())
-                .map(event -> {
+        ArrayList<Event> events = repository.findByProperties(newEvent.getName(), newEvent.getLocation(), newEvent.getTime().toString());
+        if(events.size()>2){
+            System.out.println("Something is wrong");
+        }
+        if (events.size() > 0) {
+            events
+                .forEach(event -> {
                     event.setName(newEvent.getName());
                     event.setTime(newEvent.getTime());
                     event.setLocation(newEvent.getLocation());
-                    return repository.save(event);
-                })
-                .orElseGet(() -> {
-                    newEvent.setId(nextId());
-                    return repository.save(newEvent);
+                    repository.save(event);
                 });
+            return events.get(0);
+        }
+        newEvent.setId(nextId());
+        return repository.save(newEvent);
     }
 
     // Single item
