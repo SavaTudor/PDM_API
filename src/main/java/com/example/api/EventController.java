@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -53,19 +54,14 @@ public class EventController {
     @PostMapping("/events")
     Event newEvent(@RequestBody Event newEvent) {
         System.out.println(newEvent);
-        ArrayList<Event> events = repository.findByProperties(newEvent.getName(), newEvent.getLocation(), newEvent.getTime().toString());
-        if(events.size()>2){
-            System.out.println("Something is wrong");
-        }
-        if (events.size() > 0) {
-            events
-                .forEach(event -> {
-                    event.setName(newEvent.getName());
-                    event.setTime(newEvent.getTime());
-                    event.setLocation(newEvent.getLocation());
-                    repository.save(event);
-                });
-            return events.get(0);
+//        ArrayList<Event> events = repository.findByProperties(newEvent.getName(), newEvent.getLocation(), newEvent.getTime().toString());
+        Optional<Event> event = repository.findById(newEvent.getId());
+        if(event.isPresent()) {
+            event.get().setName(newEvent.getName());
+            event.get().setTime(newEvent.getTime());
+            event.get().setLocation(newEvent.getLocation());
+            repository.save(event.get());
+            return event.get();
         }
         newEvent.setId(nextId());
         return repository.save(newEvent);

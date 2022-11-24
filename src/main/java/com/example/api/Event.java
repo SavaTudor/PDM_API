@@ -17,7 +17,6 @@ public class Event {
     private @Id @GeneratedValue Long id;
     private String name;
 
-    private LocalDateTime localDateTime;
     private LocalDateTime time;
     private String location;
 
